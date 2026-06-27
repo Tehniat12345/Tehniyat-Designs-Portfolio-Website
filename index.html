@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tehniat Designs | Portfolio</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- AOS Animation Library CSS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="icon" type="image/png" href="logo.png">
+    
+    <!-- Three.js & GSAP Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    
+    <style>
+        /* Base Setup */
+        :root {
+            --primary-teal: #2dd4bf;
+            --bg-dark: #050505; /* Deep Black like reference */
+            --bg-card: #0f172a;
+            --text-light: #f1f5f9;
+        }
+
+        * {
+            font-family: 'Poppins', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        /* --- Scrollbar Styling (Neon Teal) --- */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050505;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(45, 212, 191, 0.3);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(45, 212, 191, 0.7);
+        }
+
+        body, html {
+            background-color: #050505;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        /* --- Noise Texture Overlay (For that premium grainy look) --- */
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.04;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* --- Moving Gradient Background for Text --- */
+        .animate-gradient-text {
+            background-size: 200% auto;
+            animation: gradientMove 3s linear infinite;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        /* --- Project Card Hover Effects --- */
+        .project-card {
+            transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(45, 212, 191, 0.2);
+        }
+
+        .project-gradient-overlay {
+            background: linear-gradient(to top, rgba(5, 5, 5, 0.98) 10%, rgba(45, 212, 191, 0.6) 100%);
+            transform: translateY(100%);
+            transition: transform 0.4s ease-in-out;
+        }
+
+        .project-card:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 20px 40px -5px rgba(45, 212, 191, 0.3);
+            border-color: var(--primary-teal);
+        }
+
+        .project-card:hover .project-gradient-overlay {
+            transform: translateY(0);
+        }
+
+        .project-card:hover img {
+            transform: scale(1.1);
+        }
+
+        /* --- Glassmorphism (Dark Mode) --- */
+        .glass-effect {
+            background: rgba(5, 5, 5, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(45, 212, 191, 0.2);
+        }
+
+        /* --- Custom Animations --- */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+
+        /* --- Mobile Menu --- */
+        #mobile-menu-toggle:checked~#mobile-menu {
+            display: flex;
+            animation: slideDown 0.4s ease-out forwards;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Section Backgrounds (Transparent to show 3D) --- */
+        .section-transparent {
+            background: transparent;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Input Styles */
+        input, select, textarea {
+            background-color: #0f172a !important;
+            color: #fff;
+            border-color: #334155 !important;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary-teal) !important;
+            background-color: #1e293b !important;
+        }
+        
+        /* Canvas Container */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* Behind everything */
+            pointer-events: none;
+        }
+    </style>
+
+</head>
+
+<body class="overflow-x-hidden">
+
+    <!-- 3D Background Container (Kinetic Style) -->
+    <div id="canvas-container"></div>
+    
+    <!-- Noise Overlay for Texture -->
+    <div class="noise-overlay"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 glass-effect shadow-sm transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <a href="#" class="flex items-center gap-3 z-50 group">
+                <div class="w-14 h-14 rounded-full border-2 border-teal-400 overflow-hidden shadow-md bg-[#1e293b]">
+                    <img src="logo.png" alt="Tehniat Logo" class="w-full h-full object-cover">
+                </div>
+                <div class="flex flex-col">
+                    <span class="font-bold text-xl leading-none tracking-tight text-white group-hover:text-teal-400 transition-colors"><i>Tehniat Designs</i></span>
+                    <span class="text-[10px] text-teal-400 font-semibold tracking-widest uppercase mt-1">Portfolio</span>
+                </div>
+            </a>
+
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#home" class="nav-link text-sm font-semibold text-gray-300 hover:text-[#2dd4bf] transition-colors relative group">Home<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-teal-400 transition-all group-hover:w-full"></span></a>
+                <a href="#about" class="nav-link text-sm font-semibold text-gray-300 hover:text-[#2dd4bf] transition-colors relative group">About<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-teal-400 transition-all group-hover:w-full"></span></a>
+                <a href="#services" class="nav-link text-sm font-semibold text-gray-300 hover:text-[#2dd4bf] transition-colors relative group">Services<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-teal-400 transition-all group-hover:w-full"></span></a>
+                <a href="#portfolio" class="nav-link text-sm font-semibold text-gray-300 hover:text-[#2dd4bf] transition-colors relative group">Portfolio<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-teal-400 transition-all group-hover:w-full"></span></a>
+                <a href="#contact" class="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white text-sm font-semibold rounded-full hover:from-teal-500 hover:to-emerald-500 transition-all shadow-lg shadow-teal-500/20 hover:shadow-teal-400/50 transform hover:scale-105">Hire Me</a>
+            </div>
+
+            <!-- Mobile Hamburger -->
+            <label for="mobile-menu-toggle" class="md:hidden z-50 cursor-pointer p-2 text-gray-300 hover:text-white">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </label>
+            <input type="checkbox" id="mobile-menu-toggle" class="hidden">
+        </div>
+
+        <!-- Mobile Menu Content -->
+        <div id="mobile-menu" class="hidden fixed top-20 left-0 w-full bg-[#050505]/95 backdrop-blur-md shadow-lg border-b border-gray-800 flex-col items-center py-8 gap-6 md:hidden glass-effect">
+            <a href="#home" class="text-lg font-semibold text-gray-300 hover:text-white">Home</a>
+            <a href="#about" class="text-lg font-semibold text-gray-300 hover:text-white">About</a>
+            <a href="#services" class="text-lg font-semibold text-gray-300 hover:text-white">Services</a>
+            <a href="#portfolio" class="text-lg font-semibold text-gray-300 hover:text-white">Portfolio</a>
+            <a href="#contact" class="px-8 py-3 bg-teal-600 text-white font-semibold rounded-full shadow-md">Hire Me</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="min-h-screen flex items-center pt-24 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center relative z-10">
+            <div data-aos="fade-right" data-aos-duration="1000">
+                <div class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-teal-900/30 border border-teal-500/30 mb-8 shadow-sm animate-bounce backdrop-blur-sm">
+                    <span class="w-2.5 h-2.5 bg-teal-400 rounded-full animate-pulse"></span>
+                    <span class="text-xs font-bold text-teal-200 uppercase tracking-wider">Available for Work</span>
+                </div>
+
+                <h1 class="text-5xl lg:text-8xl font-bold leading-tight mb-6 text-white drop-shadow-lg">
+                    Elegant Designs <br>
+                    <span class="bg-gradient-to-r from-teal-400 via-emerald-300 to-teal-400 bg-clip-text text-transparent animate-gradient-text">Clean Code Creative Vision.</span>
+                </h1>
+
+                <p class="text-gray-300 text-lg mb-10 max-w-lg leading-relaxed drop-shadow-md bg-black/40 p-4 rounded-xl backdrop-blur-sm border border-white/10">
+                    Hi, I’m Tehniyat <strong class="text-white">Frontend Developer & Creative Web Designer</strong>. I create modern <strong class="text-white">, responsive,</strong> and <strong class="text-white">visually attractive websites</strong> using<strong class="text-white"> HTML, CSS,</strong> and <strong class="text-white">JavaScript.</strong>
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <a href="#portfolio" class="group relative px-8 py-4 bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-bold rounded-full shadow-xl shadow-teal-500/20 hover:shadow-teal-400/40 transform hover:scale-105 transition-all duration-300 overflow-hidden">
+                        <span class="relative z-10 flex items-center gap-2">View Portfolio <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i></span>
+                        <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                    </a>
+                    <a href="Resume.pdf" download class="px-8 py-4 bg-[#1e293b]/80 backdrop-blur-md text-white border border-gray-700 font-bold rounded-full hover:border-teal-500 hover:shadow-xl hover:shadow-teal-500/10 transition-all duration-300 hover:scale-105">Download CV</a>
+                </div>
+
+                <div class="mt-16 flex items-center gap-8">
+                    <div class="flex -space-x-4 p-2 bg-[#1e293b]/80 backdrop-blur-md rounded-full shadow-lg border border-gray-700">
+                        <img class="w-12 h-12 rounded-full border-2 border-[#1e293b]" src="https://ui-avatars.com/api/?name=C1&background=random" alt="Client">
+                        <img class="w-12 h-12 rounded-full border-2 border-[#1e293b]" src="https://ui-avatars.com/api/?name=C2&background=random" alt="Client">
+                        <img class="w-12 h-12 rounded-full border-2 border-[#1e293b]" src="https://ui-avatars.com/api/?name=C3&background=random" alt="Client">
+                    </div>
+                    <div>
+                        <p class="text-3xl font-bold text-white drop-shadow-md">30+</p>
+                        <p class="text-sm font-medium text-gray-400 uppercase tracking-wide">Happy Clients</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative" data-aos="zoom-in" data-aos-duration="1200">
+                <div class="absolute top-10 -right-10 w-32 h-32 bg-teal-400/20 rounded-full blur-3xl animate-pulse"></div>
+                <div class="absolute bottom-10 -left-10 w-40 h-40 bg-green-400/20 rounded-full blur-3xl animate-pulse delay-100"></div>
+                <div class="relative z-10 bg-[#1e293b]/90 backdrop-blur-md p-2 rounded-[2.5rem] shadow-2xl border border-gray-700 max-w-md ml-auto transform rotate-3 hover:rotate-0 transition-all duration-700">
+                    <div class="bg-[#0f172a] rounded-[2rem] p-6 relative overflow-hidden border border-gray-800">
+                        <div class="flex items-center gap-2 mb-6">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            <div class="ml-auto text-xs text-gray-500 font-mono">design.js</div>
+                        </div>
+                        <div class="space-y-3 font-mono text-sm text-gray-300">
+                            <p><span class="text-pink-400">const</span> <span class="text-purple-400">designer</span> = {</p>
+                            <p class="pl-6">name: <span class="text-teal-300">'Tehniat'</span>,</p>
+                            <p class="pl-6">location: <span class="text-teal-300">'Pakistan'</span>,</p>
+                            <p class="pl-6">skills: [<span class="text-teal-300">'HTML & CSS'</span>, <span class="text-teal-300">'Wordpress,Elementor'</span>]</p>
+                            <p>};</p>
+                            <p class="pl-6 text-teal-500">// Creating magic...</p>
+                        </div>
+                        <div class="absolute top-20 right-0 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section (Transparent) -->
+    <section id="about" class="py-24 section-transparent relative border-t border-gray-800/50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-20 items-center">
+                <div class="relative group" data-aos="fade-right">
+                    <div class="absolute inset-0 bg-gradient-to-br from-teal-600 to-emerald-400 rounded-[2.5rem] transform rotate-3 opacity-20 group-hover:rotate-6 transition-transform duration-500"></div>
+                    <img src="bussiness women.webp" onerror="this.src='d:\portfolio\bussiness women.webp';" alt="Tehniat - Designer" class="relative rounded-[2.5rem] shadow-2xl w-full object-cover h-[500px] z-10 transform group-hover:scale-[1.02] transition-transform duration-500 border border-gray-700">
+                </div>
+
+                <div data-aos="fade-left">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="h-1 w-8 bg-teal-500 rounded"></div>
+                        <span class="text-teal-400 font-bold tracking-widest uppercase text-sm">About Me</span>
+                    </div>
+                    <h2 class="text-4xl lg:text-5xl font-bold mb-6 text-white leading-tight drop-shadow-md">Hi, I'm Tehniyat!</h2>
+                    <div class="bg-black/40 p-6 rounded-2xl backdrop-blur-sm border border-white/5">
+                        <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                            A passionate <strong class="text-white">Web Designer</strong>, <strong class="text-white">Front-End Developer</strong>, and <strong class="text-white">Graphic Designer</strong> who loves creating modern, responsive, and visually appealing digital experiences. I enjoy turning <strong class="text-white">creative ideas</strong> into professional websites and <strong class="text-white">unique designs</strong>.
+                            <br><br>
+                            I have <strong class="text-white">skills</strong> in <strong class="text-white">HTML, CSS, JavaScript, WordPress, Elementor, WooCommerce, </strong>and <strong class="text-white">E-Commerce website development</strong>.
+                        </p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-6 mt-6">
+                        <div class="p-6 bg-[#1e293b]/80 backdrop-blur-md rounded-2xl border border-gray-700 hover:border-teal-500 hover:shadow-lg hover:shadow-teal-500/10 transition-all group">
+                            <div class="w-12 h-12 bg-teal-900/50 text-teal-400 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i class="fas fa-paint-brush text-xl"></i></div>
+                            <h4 class="font-bold text-white">Graphic Design</h4>
+                            <p class="text-sm text-gray-500 mt-1">CorelDraw / PS / AI</p>
+                        </div>
+                        <div class="p-6 bg-[#1e293b]/80 backdrop-blur-md rounded-2xl border border-gray-700 hover:border-emerald-500 hover:shadow-lg hover:shadow-emerald-500/10 transition-all group">
+                            <div class="w-12 h-16 bg-emerald-900/50 text-emerald-400 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i class="fas fa-code text-xl"></i></div>
+                            <h4 class="font-bold text-white">Web Dev</h4>
+                            <p class="text-sm text-gray-500 mt-1"> HTML / CSS / JavaScript .</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Skills Section (Transparent) -->
+    <section id="skills" class="py-24 section-transparent relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center max-w-3xl mx-auto mb-16" data-aos="fade-up">
+                <div class="flex items-center justify-center gap-2 mb-4">
+                    <div class="h-1 w-12 bg-teal-500 rounded"></div>
+                    <span class="text-teal-400 font-bold tracking-widest uppercase text-sm">My Expertise</span>
+                    <div class="h-1 w-12 bg-teal-500 rounded"></div>
+                </div>
+                <h2 class="text-4xl font-bold text-white drop-shadow-md">Technical Skills</h2>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div class="bg-[#1e293b]/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-700 hover:shadow-xl hover:-translate-y-2 hover:border-teal-500 transition-all duration-300 group text-center" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="w-16 h-16 bg-orange-900/30 text-orange-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl group-hover:rotate-6 transition-transform"><i class="fab fa-html5"></i></div>
+                    <h3 class="font-bold text-white">HTML5</h3>
+                </div>
+                <div class="bg-[#1e293b]/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-700 hover:shadow-xl hover:-translate-y-2 hover:border-blue-500 transition-all duration-300 group text-center" data-aos="zoom-in" data-aos-delay="150">
+                    <div class="w-16 h-16 bg-blue-900/30 text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl group-hover:rotate-6 transition-transform"><i class="fab fa-css3-alt"></i></div>
+                    <h3 class="font-bold text-white">CSS3</h3>
+                </div>
+                <div class="bg-[#1e293b]/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-700 hover:shadow-xl hover:-translate-y-2 hover:border-yellow-400 transition-all duration-300 group text-center" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="w-16 h-16 bg-yellow-900/30 text-yellow-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl group-hover:rotate-6 transition-transform"><i class="fab fa-js"></i></div>
+                    <h3 class="font-bold text-white">JavaScript</h3>
+                </div>
+                <div class="bg-[#1e293b]/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-700 hover:shadow-xl hover:-translate-y-2 hover:border-indigo-500 transition-all duration-300 group text-center" data-aos="zoom-in" data-aos-delay="250">
+                    <div class="w-16 h-16 bg-indigo-900/30 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl group-hover:rotate-6 transition-transform"><i class="fab fa-wordpress"></i></div>
+                    <h3 class="font-bold text-white">WordPress</h3>
+                </div>
+                <div class="bg-[#1e293b]/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-700 hover:shadow-xl hover:-translate-y-2 hover:border-pink-500 transition-all duration-300 group text-center" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="w-16 h-16 bg-pink-900/30 text-pink-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl group-hover:rotate-6 transition-transform"><i class="fab fa-elementor"></i></div>
+                    <h3 class="font-bold text-white">Elementor</h3>
+                </div>
+                <div class="bg-[#1e293b]/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-700 hover:shadow-xl hover:-translate-y-2 hover:border-purple-500 transition-all duration-300 group text-center" data-aos="zoom-in" data-aos-delay="350">
+                    <div class="w-16 h-16 bg-purple-900/30 text-purple-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl group-hover:rotate-6 transition-transform"><i class="fas fa-shopping-bag"></i></div>
+                    <h3 class="font-bold text-white">WooCommerce</h3>
+                </div>
+                 <div class="bg-[#1e293b]/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-700 hover:shadow-xl hover:-translate-y-2 hover:border-orange-500 transition-all duration-300 group text-center" data-aos="zoom-in" data-aos-delay="400">
+                    <div class="w-16 h-16 bg-orange-900/30 text-orange-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl group-hover:rotate-6 transition-transform"><i class="fab fa-adobe"></i></div>
+                    <h3 class="font-bold text-white">Photoshop</h3>
+                </div>
+                 <div class="bg-[#1e293b]/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-700 hover:shadow-xl hover:-translate-y-2 hover:border-yellow-500 transition-all duration-300 group text-center" data-aos="zoom-in" data-aos-delay="450">
+                    <div class="w-16 h-16 bg-yellow-900/30 text-yellow-500 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl group-hover:rotate-6 transition-transform"><i class="fas fa-vector-square"></i></div>
+                    <h3 class="font-bold text-white">Illustrator</h3>
+                </div>
+                 <div class="bg-[#1e293b]/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-700 hover:shadow-xl hover:-translate-y-2 hover:border-blue-400 transition-all duration-300 group text-center" data-aos="zoom-in" data-aos-delay="500">
+                    <div class="w-16 h-16 bg-blue-900/30 text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl group-hover:rotate-6 transition-transform"><i class="fas fa-pen-nib"></i></div>
+                    <h3 class="font-bold text-white">CorelDraw</h3>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section (Transparent) -->
+    <section id="services" class="py-24 section-transparent relative border-t border-gray-800/50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center max-w-3xl mx-auto mb-16" data-aos="fade-up">
+                <div class="flex items-center justify-center gap-2 mb-4">
+                    <div class="h-1 w-12 bg-teal-500 rounded"></div>
+                    <span class="text-teal-400 font-bold tracking-widest uppercase text-sm">What I Offer</span>
+                    <div class="h-1 w-12 bg-teal-500 rounded"></div>
+                </div>
+                <h2 class="text-4xl font-bold text-white drop-shadow-md">My Premium Services</h2>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                <div class="group bg-[#0f172a]/90 backdrop-blur-md p-10 rounded-[2rem] border border-gray-700 shadow-xl shadow-black/50 hover:shadow-2xl hover:shadow-teal-500/10 transition-all duration-500 hover:-translate-y-2 relative overflow-hidden" data-aos="fade-up" data-aos-delay="100">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-teal-900/50 to-transparent rounded-bl-full -z-10 group-hover:scale-150 transition-transform duration-500"></div>
+                    <div class="w-16 h-16 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-6 text-white shadow-lg shadow-teal-500/30 group-hover:rotate-12 transition-transform duration-300"><i class="fas fa-laptop-code text-2xl"></i></div>
+                    <h3 class="text-2xl font-bold mb-3 text-white">Web Design & Dev</h3>
+                    <p class="text-gray-400 mb-6 leading-relaxed">I build fast, responsive, and user-friendly websites using WordPress and Elementor tailored to your brand.</p>
+                    <ul class="text-sm text-gray-500 space-y-3">
+                        <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-teal-400 rounded-full"></span> Custom HTML/CSS</li>
+                        <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-teal-400 rounded-full"></span> WordPress Setup</li>
+                        <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-teal-400 rounded-full"></span> Elementor Design</li>
+                    </ul>
+                </div>
+
+                <div class="group bg-[#0f172a]/90 backdrop-blur-md p-10 rounded-[2rem] border border-gray-700 shadow-xl shadow-black/50 hover:shadow-2xl hover:shadow-pink-500/10 transition-all duration-500 hover:-translate-y-2 relative overflow-hidden" data-aos="fade-up" data-aos-delay="200">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-pink-900/50 to-transparent rounded-bl-full -z-10 group-hover:scale-150 transition-transform duration-500"></div>
+                    <div class="w-16 h-16 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl flex items-center justify-center mb-6 text-white shadow-lg shadow-pink-500/30 group-hover:rotate-12 transition-transform duration-300"><i class="fas fa-pen-nib text-2xl"></i></div>
+                    <h3 class="text-2xl font-bold mb-3 text-white">Graphic Design</h3>
+                    <p class="text-gray-400 mb-6 leading-relaxed">Using industry-leading tools like CorelDraw and Photoshop, I design impactful logos and branding.</p>
+                    <ul class="text-sm text-gray-500 space-y-3">
+                        <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-pink-400 rounded-full"></span> Logo Design</li>
+                        <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-pink-400 rounded-full"></span> Brand Identity</li>
+                        <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-pink-400 rounded-full"></span> Social Media Posts</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PORTFOLIO SECTION -->
+    <section id="portfolio" class="py-24 bg-[#0f172a]">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <div class="flex items-center justify-center gap-2 mb-4">
+                    <div class="h-1 w-12 bg-teal-500 rounded"></div>
+                    <span class="text-teal-400 font-bold tracking-widest uppercase text-sm">Recent Work</span>
+                    <div class="h-1 w-12 bg-teal-500 rounded"></div>
+                </div>
+                <h2 class="text-4xl font-bold text-white">My Creative Portfolio</h2>
+                <p class="text-gray-500 mt-2">Landing pages, promo designs & creative concepts.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Project 1: Chai  -->
+                <div class="project-card rounded-[2rem] overflow-hidden bg-[#1e293b] shadow-lg border border-gray-700 group flex flex-col h-full" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="h-64 overflow-hidden relative flex-shrink-0 bg-gray-800">
+                        <img src="chai.JPG" alt="Concrete Dreams" class="w-full h-full object-cover transition-transform duration-700">
+                        <div class="project-gradient-overlay absolute inset-0 flex flex-col justify-end p-6 z-10">
+                            <h3 class="text-white font-bold text-2xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">Chai  </h3>
+                            <p class="text-teal-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">High-end construction services.</p>
+                        <div class="flex gap-3 mt-4">
+                            <a href="https://tehniat12345.github.io/Tea-House-Landing-Page-/" target="_blank"
+                                class="bg-white text-[#013220] px-5 py-2 rounded-lg font-bold text-sm hover:bg-teal-400 hover:text-white transition-all duration-300">
+                                View Live
+                            </a>
+                        
+                            <a href="https://github.com/Tehniat12345/Tea-House-Landing-Page-" target="_blank"
+                                class="bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-sm border border-gray-600 hover:bg-black hover:border-teal-400 transition-all duration-300">
+                                <i class="fab fa-github mr-2"></i>GitHub
+                            </a>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 2: Unleash Power -->
+                <div class="project-card rounded-[2rem] overflow-hidden bg-[#1e293b] shadow-lg border border-gray-700 group flex flex-col h-full" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="h-64 overflow-hidden relative flex-shrink-0 bg-gray-800">
+                        <img src="car.JPG" alt="Unleash Power" class="w-full h-full object-cover transition-transform duration-700">
+                        <div class="project-gradient-overlay absolute inset-0 flex flex-col justify-end p-6 z-10">
+                            <h3 class="text-white font-bold text-2xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">Unleash Power</h3>
+                            <p class="text-blue-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Premium sports car rentals.</p>
+                            <div class="flex gap-3 mt-4">
+                                <a href="https://tehniat12345.github.io/luxury-car-rental-landing-page/" target="_blank"
+                                    class="bg-white text-[#013220] px-5 py-2 rounded-lg font-bold text-sm hover:bg-teal-400 hover:text-white transition-all duration-300">
+                                    View Live
+                                </a>
+                            
+                                <a href="https://github.com/Tehniat12345/luxury-car-rental-landing-page" target="_blank"
+                                    class="bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-sm border border-gray-600 hover:bg-black hover:border-teal-400 transition-all duration-300">
+                                    <i class="fab fa-github mr-2"></i>GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 3: yatch -->
+                <div class="project-card rounded-[2rem] overflow-hidden bg-[#1e293b] shadow-lg border border-gray-700 group flex flex-col h-full" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="h-64 overflow-hidden relative flex-shrink-0 bg-gray-800">
+                        <img src="yatch.JPG" alt="yatch" class="w-full h-full object-cover transition-transform duration-700">
+                        <div class="project-gradient-overlay absolute inset-0 flex flex-col justify-end p-6 z-10">
+                            <h3 class="text-white font-bold text-2xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">Yatch</h3>
+                            <p class="text-green-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Drive the luxury future.</p>
+                            <div class="flex gap-3 mt-4">
+                                <a href="https://tehniat12345.github.io/-Luxury-Yacht-Landing-Page/" target="_blank"
+                                    class="bg-white text-[#013220] px-5 py-2 rounded-lg font-bold text-sm hover:bg-green-400 hover:text-white transition-all duration-300">
+                                    View Live
+                                </a>
+                            
+                                <a href="https://github.com/Tehniat12345/-Luxury-Yacht-Landing-Page-" target="_blank"
+                                    class="bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-sm border border-gray-600 hover:bg-black hover:border-green-400 transition-all duration-300">
+                                    <i class="fab fa-github mr-2"></i>GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 4: Velvet & Vogue -->
+                <div class="project-card rounded-[2rem] overflow-hidden bg-[#1e293b] shadow-lg border border-gray-700 group flex flex-col h-full" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="h-64 overflow-hidden relative flex-shrink-0 bg-gray-800">
+                        <img src="clothes.PNG" alt="clothes" class="w-full h-full object-cover transition-transform duration-700">
+                        <div class="project-gradient-overlay absolute inset-0 flex flex-col justify-end p-6 z-10">
+                            <h3 class="text-white font-bold text-2xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">Velvet & Vogue</h3>
+                            <p class="text-purple-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Minimalist couture fashion.</p>
+                            <div class="flex gap-3 mt-4">
+                                <a href="https://tehniat12345.github.io/Velvet-Vogue/" target="_blank"
+                                    class="bg-white text-[#013220] px-5 py-2 rounded-lg font-bold text-sm hover:bg-purple-400 hover:text-white transition-all duration-300">
+                                    View Live
+                                </a>
+                            
+                                <a href="https://github.com/Tehniat12345/Velvet-Vogue" target="_blank"
+                                    class="bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-sm border border-gray-600 hover:bg-black hover:border-purple-400 transition-all duration-300">
+                                    <i class="fab fa-github mr-2"></i>GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 5: Brewing Excellence -->
+                <div class="project-card rounded-[2rem] overflow-hidden bg-[#1e293b] shadow-lg border border-gray-700 group flex flex-col h-full" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="h-64 overflow-hidden relative flex-shrink-0 bg-gray-800">
+                        <img src="coffe.JPG" alt="coffe" class="w-full h-full object-cover transition-transform duration-700">
+                        <div class="project-gradient-overlay absolute inset-0 flex flex-col justify-end p-6 z-10">
+                            <h3 class="text-white font-bold text-2xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">Brewing Excellence</h3>
+                            <p class="text-amber-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Organic artisanal coffee.</p>
+                            <div class="flex gap-3 mt-4">
+                                <a href="https://tehniat12345.github.io/The-Coffee-Craft/" target="_blank"
+                                    class="bg-white text-[#013220] px-5 py-2 rounded-lg font-bold text-sm hover:bg-amber-400 hover:text-white transition-all duration-300">
+                                    View Live
+                                </a>
+                            
+                                <a href="https://github.com/Tehniat12345/The-Coffee-Craft" target="_blank"
+                                    class="bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-sm border border-gray-600 hover:bg-black hover:border-amber-400 transition-all duration-300">
+                                    <i class="fab fa-github mr-2"></i>GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 6: Healthy Souls -->
+                <div class="project-card rounded-[2rem] overflow-hidden bg-[#1e293b] shadow-lg border border-gray-700 group flex flex-col h-full" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="h-64 overflow-hidden relative flex-shrink-0 bg-gray-800">
+                        <img src="food.PNG" alt="food" class="w-full h-full object-cover transition-transform duration-700">
+                        <div class="project-gradient-overlay absolute inset-0 flex flex-col justify-end p-6 z-10">
+                            <h3 class="text-white font-bold text-2xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">Healthy Souls</h3>
+                            <p class="text-green-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Organic nutrient-rich bowls.</p>
+                            <div class="flex gap-3 mt-4">
+                                <a href="https://tehniat12345.github.io/FreshRoot-Landing-Page/" target="_blank"
+                                    class="bg-white text-[#013220] px-5 py-2 rounded-lg font-bold text-sm hover:bg-green-400 hover:text-white transition-all duration-300">
+                                    View Live
+                                </a>
+                            
+                                <a href="https://github.com/Tehniat12345/FreshRoot-Landing-Page" target="_blank"
+                                    class="bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-sm border border-gray-600 hover:bg-black hover:border-green-400 transition-all duration-300">
+                                    <i class="fab fa-github mr-2"></i>GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 7: Biryani -->
+            <div class="project-card rounded-[2rem] overflow-hidden bg-[#1e293b] shadow-lg border border-gray-700 group flex flex-col h-full" data-aos="zoom-in" data-aos-delay="300">
+                <div class="h-64 overflow-hidden relative flex-shrink-0 bg-gray-800">
+                    <img src="biryani.JPG" alt="Healthy Souls" class="w-full h-full object-cover transition-transform duration-700">
+                    <div class="project-gradient-overlay absolute inset-0 flex flex-col justify-end p-6 z-10">
+                        <h3 class="text-white font-bold text-2xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">Biryani</h3>
+                        <p class="text-green-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Organic rice dish.</p>
+                        <div class="flex gap-3 mt-4">
+                            <a href="https://tehniat12345.github.io/-Shahi-Biryani-Taste-of-Tradition/" target="_blank"
+                                class="bg-white text-[#013220] px-5 py-2 rounded-lg font-bold text-sm hover:bg-green-400 hover:text-white transition-all duration-300">
+                                View Live
+                            </a>
+                            <a href="https://github.com/Tehniat12345/-Shahi-Biryani-Taste-of-Tradition" target="_blank"
+                                class="bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-sm border border-gray-600 hover:bg-black hover:border-green-400 transition-all duration-300">
+                                <i class="fab fa-github mr-2"></i>GitHub
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                <!-- Project 8:Shawarma -->
+                <div class="project-card rounded-[2rem] overflow-hidden bg-[#1e293b] shadow-lg border border-gray-700 group flex flex-col h-full" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="h-64 overflow-hidden relative flex-shrink-0 bg-gray-800">
+                        <img src="shawarma.JPG" alt="Healthy Souls" class="w-full h-full object-cover transition-transform duration-700">
+                        <div class="project-gradient-overlay absolute inset-0 flex flex-col justify-end p-6 z-10">
+                            <h3 class="text-white font-bold text-2xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">Shawarma</h3>
+                            <p class="text-green-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Organic nutrient-rich bowls.</p>
+                            <div class="flex gap-3 mt-4">
+                                <a href="https://tehniat12345.github.io/Spicy-Shawarma-Landing_Page/" class="bg-white text-[#013220] px-5 py-2 rounded-lg font-bold text-sm hover:bg-green-400 hover:text-white transition-all duration-300">
+                                    View Live
+                                </a>
+                                <a href="https://github.com/Tehniat12345/Spicy-Shawarma-Landing_Page" target="_blank"
+                                    class="bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-sm border border-gray-600 hover:bg-black hover:border-green-400 transition-all duration-300">
+                                    <i class="fab fa-github mr-2"></i>GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Project 9: Express -->
+                <div class="project-card rounded-[2rem] overflow-hidden bg-[#1e293b] shadow-lg border border-gray-700 group flex flex-col h-full" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="h-64 overflow-hidden relative flex-shrink-0 bg-gray-800">
+                        <img src="express.JPG" alt="Healthy Souls" class="w-full h-full object-cover transition-transform duration-700">
+                        <div class="project-gradient-overlay absolute inset-0 flex flex-col justify-end p-6 z-10">
+                            <h3 class="text-white font-bold text-2xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">Express</h3>
+                            <p class="text-green-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Organic nutrient-rich bowls.</p>
+                            <div class="flex gap-3 mt-4">
+                                <a href="https://tehniat12345.github.io/Bus-Landing-Page-/" class="bg-white text-[#013220] px-5 py-2 rounded-lg font-bold text-sm hover:bg-blue-400 hover:text-white transition-all duration-300">
+                                    View Live
+                                </a>
+                                <a href="https://github.com/Tehniat12345/Bus-Landing-Page-" target="_blank"
+                                    class="bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-sm border border-gray-600 hover:bg-black hover:border-blue-400 transition-all duration-300">
+                                    <i class="fab fa-github mr-2"></i>GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Project10: mint -->
+                <div class="project-card rounded-[2rem] overflow-hidden bg-[#1e293b] shadow-lg border border-gray-700 group flex flex-col h-full" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="h-64 overflow-hidden relative flex-shrink-0 bg-gray-800">
+                        <img src="mint.JPG" alt="Healthy Souls" class="w-full h-full object-cover transition-transform duration-700">
+                        <div class="project-gradient-overlay absolute inset-0 flex flex-col justify-end p-6 z-10">
+                            <h3 class="text-white font-bold text-2xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">Mint Margrita</h3>
+                            <p class="text-green-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Drink.</p>
+                            <div class="flex gap-3 mt-4">
+                                <a href=" https://tehniat12345.github.io/Mint-Margarita-Promo-Banner-Design/" class="bg-white text-[#013220] px-5 py-2 rounded-lg font-bold text-sm hover:bg-red-400 hover:text-white transition-all duration-300">
+                                    View Live
+                                </a>
+                                <a href="https://github.com/Tehniat12345/Mint-Margarita-Promo-Banner-Design/" target="_blank"
+                                    class="bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-sm border border-gray-600 hover:bg-black hover:border-red-400 transition-all duration-300">
+                                    <i class="fab fa-github mr-2"></i>GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Project 11: Heavy bike -->
+                <div class="project-card rounded-[2rem] overflow-hidden bg-[#1e293b] shadow-lg border border-gray-700 group flex flex-col h-full" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="h-64 overflow-hidden relative flex-shrink-0 bg-gray-800">
+                        <img src="bike.JPG" alt="Healthy Souls" class="w-full h-full object-cover transition-transform duration-700">
+                        <div class="project-gradient-overlay absolute inset-0 flex flex-col justify-end p-6 z-10">
+                            <h3 class="text-white font-bold text-2xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">Heavy Bike</h3>
+                            <p class="text-green-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">High Speed.</p>
+                            <div class="flex gap-3 mt-4">
+                                <a href="https://tehniat12345.github.io/Next-Gen-Heavy-Bike-" class="bg-white text-[#013220] px-5 py-2 rounded-lg font-bold text-sm hover:bg-blue-400 hover:text-white transition-all duration-300">
+                                    View Live
+                                </a>
+                                <a href="https://github.com/Tehniat12345/Next-Gen-Heavy-Bike-" target="_blank"
+                                    class="bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-sm border border-gray-600 hover:bg-black hover:border-blue-400 transition-all duration-300">
+                                    <i class="fab fa-github mr-2"></i>GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Project 12: Khander -->
+                <div class="project-card rounded-[2rem] overflow-hidden bg-[#1e293b] shadow-lg border border-gray-700 group flex flex-col h-full" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="h-64 overflow-hidden relative flex-shrink-0 bg-gray-800">
+                        <img src="khander.JPG" alt="Healthy Souls" class="w-full h-full object-cover transition-transform duration-700">
+                        <div class="project-gradient-overlay absolute inset-0 flex flex-col justify-end p-6 z-10">
+                            <h3 class="text-white font-bold text-2xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">Khander</h3>
+                            <p class="text-green-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Dark and mysterious.</p>
+                            <div class="flex gap-3 mt-4">
+                                <a href="https://tehniat12345.github.io/-Horror-Landing-Page/" class="bg-white text-[#013220] px-5 py-2 rounded-lg font-bold text-sm hover:bg-blue-400 hover:text-white transition-all duration-300">
+                                    View Live
+                                </a>
+                                <a href="https://github.com/Tehniat12345/-Horror-Landing-Page" target="_blank"
+                                    class="bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-sm border border-gray-600 hover:bg-black hover:border-blue-400 transition-all duration-300">
+                                    <i class="fab fa-github mr-2"></i>GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Project 13: Plane -->
+                <div class="project-card rounded-[2rem] overflow-hidden bg-[#1e293b] shadow-lg border border-gray-700 group flex flex-col h-full" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="h-64 overflow-hidden relative flex-shrink-0 bg-gray-800">
+                        <img src="palne.JPG" alt="Plane" class="w-full h-full object-cover transition-transform duration-700">
+                        <div class="project-gradient-overlay absolute inset-0 flex flex-col justify-end p-6 z-10">
+                            <h3 class="text-white font-bold text-2xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">Plane</h3>
+                            <p class="text-green-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">High-speed travel.</p>
+                            <div class="flex gap-3 mt-4">
+                                <a href="https://tehniat12345.github.io/Next-Gen-Plane-Landing-Page/" class="bg-white text-[#013220] px-5 py-2 rounded-lg font-bold text-sm hover:bg-blue-400 hover:text-white transition-all duration-300">
+                                    View Live
+                                </a>
+                                <a href="https://github.com/Tehniat12345/Next-Gen-Plane-Landing-Page" target="_blank"
+                                    class="bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-sm border border-gray-600 hover:bg-black hover:border-blue-400 transition-all duration-300">
+                                    <i class="fab fa-github mr-2"></i>GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Project 14: Negroni -->
+                <div class="project-card rounded-[2rem] overflow-hidden bg-[#1e293b] shadow-lg border border-gray-700 group flex flex-col h-full" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="h-64 overflow-hidden relative flex-shrink-0 bg-gray-800">
+                        <img src="negroni.JPG" alt="negroni" class="w-full h-full object-cover transition-transform duration-700">
+                        <div class="project-gradient-overlay absolute inset-0 flex flex-col justify-end p-6 z-10">
+                            <h3 class="text-white font-bold text-2xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">Negroni</h3>
+                            <p class="text-green-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Classic Italian cocktail.</p>
+                            <div class="flex gap-3 mt-4">
+                                <a href="https://tehniat12345.github.io/The-Negroni-Luxury-Beverage-Landing-Page/" class="bg-white text-[#013220] px-5 py-2 rounded-lg font-bold text-sm hover:bg-red-500 hover:text-white transition-all duration-300">
+                                    View Live
+                                </a>
+                                <a href="https://github.com/Tehniat12345/The-Negroni-Luxury-Beverage-Landing-Page" target="_blank"
+                                    class="bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-sm border border-gray-600 hover:bg-black hover:border-red-400 transition-all duration-300">
+                                    <i class="fab fa-github mr-2"></i>GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Project 15 :Bloody Mary -->
+                <div class="project-card rounded-[2rem] overflow-hidden bg-[#1e293b] shadow-lg border border-gray-700 group flex flex-col h-full" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="h-64 overflow-hidden relative flex-shrink-0 bg-gray-800">
+                        <img src="bloody mary.JPG" alt="bloody mary" class="w-full h-full object-cover transition-transform duration-700">
+                        <div class="project-gradient-overlay absolute inset-0 flex flex-col justify-end p-6 z-10">
+                            <h3 class="text-white font-bold text-2xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">Bloody Mary</h3>
+                            <p class="text-green-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Classic American cocktail.</p>
+                            <div class="flex gap-3 mt-4">
+                                <a href="https://tehniat12345.github.io/Bloody-Mary-Bold-Taste-Redefined/" class="bg-white text-[#013220] px-5 py-2 rounded-lg font-bold text-sm hover:bg-red-500 hover:text-white transition-all duration-300">
+                                    View Live
+                                </a>
+                                <a href="https://github.com/Tehniat12345/Bloody-Mary-Bold-Taste-Redefined" target="_blank"
+                                    class="bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-sm border border-gray-600 hover:bg-black hover:border-red-400 transition-all duration-300">
+                                    <i class="fab fa-github mr-2"></i>GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Project 16 :Train -->
+                <div class="project-card rounded-[2rem] overflow-hidden bg-[#1e293b] shadow-lg border border-gray-700 group flex flex-col h-full" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="h-64 overflow-hidden relative flex-shrink-0 bg-gray-800">
+                        <img src="train.JPG" alt="train" class="w-full h-full object-cover transition-transform duration-700">
+                        <div class="project-gradient-overlay absolute inset-0 flex flex-col justify-end p-6 z-10">
+                            <h3 class="text-white font-bold text-2xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">Train</h3>
+                            <p class="text-green-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">High Speed .</p>
+                            <div class="flex gap-3 mt-4">
+                                <a href="https://tehniat12345.github.io/Velocity-Rail-Journey-on-Tracks-/" class="bg-white text-[#013220] px-5 py-2 rounded-lg font-bold text-sm hover:bg-purple-500 hover:text-white transition-all duration-300">
+                                    View Live
+                                </a>
+                                <a href="https://github.com/Tehniat12345/Velocity-Rail-Journey-on-Tracks-" target="_blank"
+                                    class="bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-sm border border-gray-600 hover:bg-black hover:border-purple-400 transition-all duration-300">
+                                    <i class="fab fa-github mr-2"></i>GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Project 17 :BMW -->
+                <div class="project-card rounded-[2rem] overflow-hidden bg-[#1e293b] shadow-lg border border-gray-700 group flex flex-col h-full" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="h-64 overflow-hidden relative flex-shrink-0 bg-gray-800">
+                        <img src="bmw.JPG" alt="bmw" class="w-full h-full object-cover transition-transform duration-700">
+                        <div class="project-gradient-overlay absolute inset-0 flex flex-col justify-end p-6 z-10">
+                            <h3 class="text-white font-bold text-2xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">BMW</h3>
+                            <p class="text-green-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Luxury Sports Car.</p>
+                            <div class="flex gap-3 mt-4">
+                                <a href="https://tehniat12345.github.io/BMW_UI_UX__Design/" class="bg-white text-[#013220] px-5 py-2 rounded-lg font-bold text-sm hover:bg-black hover:text-white transition-all duration-300">
+                                    View Live
+                                </a>
+                                <a href="https://github.com/Tehniat12345/BMW_UI_UX__Design" target="_blank"
+                                    class="bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-sm border border-gray-600 hover:bg-black hover:border-blue-400 transition-all duration-300">
+                                    <i class="fab fa-github mr-2"></i>GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Project 18 :Cake -->
+                <div class="project-card rounded-[2rem] overflow-hidden bg-[#1e293b] shadow-lg border border-gray-700 group flex flex-col h-full" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="h-64 overflow-hidden relative flex-shrink-0 bg-gray-800">
+                        <img src="cake.JPG" alt="cake" class="w-full h-full object-cover transition-transform duration-700">
+                        <div class="project-gradient-overlay absolute inset-0 flex flex-col justify-end p-6 z-10">
+                            <h3 class="text-white font-bold text-2xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">Cake</h3>
+                            <p class="text-green-200 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Delicious and Beautiful.</p>
+                            <div class="flex gap-3 mt-4">
+                                <a href="https://tehniat12345.github.io/Sweet-Delight-Handcrafted-Cakes-Bakery-Banner/" class="bg-white text-[#013220] px-5 py-2 rounded-lg font-bold text-sm hover:bg-pink-500 hover:text-white transition-all duration-300">
+                                    View Live
+                                </a>
+                                <a href="https://github.com/Tehniat12345/Sweet-Delight-Handcrafted-Cakes-Bakery-Banner" target="_blank"
+                                    class="bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-sm border border-gray-600 hover:bg-black hover:border-pink-400 transition-all duration-300">
+                                    <i class="fab fa-github mr-2"></i>GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Testimonials Section (Transparent) -->
+    <section class="py-24 section-transparent relative border-t border-gray-800/50">
+        <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-teal-500/5 rounded-full blur-[100px] pointer-events-none"></div>
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-4xl font-bold mb-4 drop-shadow-md">What Clients Say</h2>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                <div class="group bg-[#0f172a]/90 backdrop-blur-md border border-gray-700 p-8 rounded-3xl hover:border-teal-500/50 transition-colors duration-300 shadow-lg" data-aos="fade-up" data-aos-delay="100">
+                    <div class="flex gap-1 text-yellow-400 mb-6"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    <p class="text-gray-400 italic mb-8 text-lg leading-relaxed">"Tehniat is an amazing designer. The logo she made in CorelDraw was exactly what I needed! Professional and fast."</p>
+                    <div class="font-bold text-teal-400">— Sarah J., Business Owner</div>
+                </div>
+                <div class="group bg-[#0f172a]/90 backdrop-blur-md border border-gray-700 p-8 rounded-3xl hover:border-teal-500/50 transition-colors duration-300 shadow-lg" data-aos="fade-up" data-aos-delay="200">
+                    <div class="flex gap-1 text-yellow-400 mb-6"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    <p class="text-gray-400 italic mb-8 text-lg leading-relaxed">"Excellent web development skills. My Elementor site looks professional and fast. Highly recommended for WordPress work."</p>
+                    <div class="font-bold text-teal-400">— Ahmed K., Startup Founder</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section (Transparent) -->
+    <section id="contact" class="py-24 section-transparent relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="bg-[#1e293b]/90 backdrop-blur-md rounded-[3rem] shadow-2xl overflow-hidden grid lg:grid-cols-2 border border-gray-700" data-aos="fade-up">
+                <div class="bg-gradient-to-br from-teal-800 to-[#0f172a] p-12 lg:p-16 text-white flex flex-col justify-between relative overflow-hidden">
+                    <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-teal-500/10 rounded-full blur-[80px]"></div>
+                    <div>
+                        <h2 class="text-4xl lg:text-5xl font-bold mb-8">Let's Discuss Your Project</h2>
+                        <p class="text-teal-100 text-lg mb-12 leading-relaxed">Ready to start your next project? Reach out for new collaborations or a friendly design consultation.</p>
+                        <div class="space-y-8">
+                            <div class="flex items-start gap-4 group">
+                                <div class="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-teal-500 group-hover:text-white transition-colors border border-white/10"><i class="fas fa-map-marker-alt text-lg text-teal-300 group-hover:text-white"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-sm uppercase tracking-wider text-teal-300 mb-1">Location</h4>
+                                    <p class="text-lg">Rawalpindi, Pakistan</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4 group">
+                                <div class="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-teal-500 group-hover:text-white transition-colors border border-white/10"><i class="fas fa-envelope text-lg text-teal-300 group-hover:text-white"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-sm uppercase tracking-wider text-teal-300 mb-1">Email</h4>
+                                    <p class="text-lg">tehniattehniat0@gmail.com</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-12 lg:p-16 bg-[#0f172a]">
+                    <h3 class="text-2xl font-bold text-white mb-8">Send a Message</h3>
+                    <form action="https://formspree.io/f/mkoyzwzw" method="POST" class="space-y-6">
+                        <div class="relative group">
+                            <input type="text" id="name" required class="w-full px-4 py-4 pt-6 border border-gray-700 rounded-xl focus:outline-none">
+                            <label for="name" class="absolute left-4 top-2 text-gray-500 text-sm bg-[#0f172a] px-2">Your Name</label>
+                        </div>
+                        <div class="relative group">
+                            <input type="email" id="email" name="_replyto" required class="w-full px-4 py-4 pt-6 border border-gray-700 rounded-xl focus:outline-none">
+                            <label for="email" class="absolute left-4 top-2 text-gray-500 text-sm bg-[#0f172a] px-2">Email Address</label>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-300 mb-2">Service Required</label>
+                            <select name="service" class="w-full px-4 py-4 border border-gray-700 rounded-xl focus:outline-none focus:ring-0 focus:border-teal-500 cursor-pointer appearance-none shadow-sm">
+                                <option class="bg-[#0f172a]">Website Development</option>
+                                <option class="bg-[#0f172a]">Logo & Branding</option>
+                                <option class="bg-[#0f172a]">Social Media Design</option>
+                                <option class="bg-[#0f172a]">Other</option>
+                            </select>
+                        </div>
+                        <div class="relative group">
+                            <textarea id="message" name="message" rows="5" required class="w-full px-4 py-4 pt-6 border border-gray-700 rounded-xl focus:outline-none resize-none"></textarea>
+                            <label for="message" class="absolute left-4 top-2 text-gray-500 text-sm bg-[#0f172a] px-2">Project Details</label>
+                        </div>
+                        <button type="submit" class="w-full py-4 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-500 transition-all transform hover:scale-[1.02] shadow-lg hover:shadow-teal-500/40 flex items-center justify-center gap-2">Send Message <i class="fas fa-paper-plane"></i></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer (Semi-transparent) -->
+    <footer class="bg-[#020617]/90 backdrop-blur-md text-white pt-24 pb-12 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-16 mb-16">
+                <div class="col-span-2 lg:col-span-1">
+                    <div class="flex items-center gap-3 mb-8">
+                        <img src="logo.png" alt="Tehniat Logo" class="w-12 h-12 rounded-xl border border-teal-600 object-cover">
+                        <span class="font-bold text-2xl">Tehniat Designs</span>
+                    </div>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-8">High-end graphic and web solutions tailored to client requirements. Professionalism in every pixel.</p>
+                    <div class="text-sm text-gray-500">© 2026 Tehniat Designs. All Rights Reserved.</div>
+                </div>
+                <div>
+                    <h4 class="font-bold text-teal-400 mb-8 uppercase tracking-wider text-sm">Quick Nav</h4>
+                    <ul class="space-y-4 text-sm text-gray-300">
+                        <li><a href="#home" class="hover:text-white hover:translate-x-2 transition-all inline-block">Home</a></li>
+                        <li><a href="#about" class="hover:text-white hover:translate-x-2 transition-all inline-block">About Me</a></li>
+                        <li><a href="#services" class="hover:text-white hover:translate-x-2 transition-all inline-block">Services</a></li>
+                        <li><a href="#portfolio" class="hover:text-white hover:translate-x-2 transition-all inline-block">Portfolio</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-teal-400 mb-8 uppercase tracking-wider text-sm">Services</h4>
+                    <ul class="space-y-4 text-sm text-gray-300">
+                        <li>Web Development</li>
+                        <li>Logo Design</li>
+                        <li>CorelDraw Expertise</li>
+                        <li>Social Media Posts</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-teal-400 mb-8 uppercase tracking-wider text-sm">Connect</h4>
+                    <div class="flex gap-4 flex-wrap">
+                        <a href="https://www.linkedin.com/in/tehniat-💫-93b7143aa" target="_blank" class="w-12 h-12 border border-gray-700 rounded-xl flex items-center justify-center text-gray-400 hover:bg-teal-600 hover:text-white hover:border-teal-600 hover:shadow-lg hover:shadow-teal-500/40 hover:-translate-y-1 transition-all duration-300"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="https://www.fiverr.com/tehniattehni144" target="_blank" class="w-12 h-12 border border-gray-700 rounded-xl flex items-center justify-center text-gray-400 hover:bg-teal-600 hover:text-white hover:border-teal-600 hover:shadow-lg hover:shadow-teal-500/40 hover:-translate-y-1 transition-all duration-300">fi.</a>
+                        <a href="https://www.facebook.com/profile.php?id=61569261904781" target="_blank" class="w-12 h-12 border border-gray-700 rounded-xl flex items-center justify-center text-gray-400 hover:bg-teal-600 hover:text-white hover:border-teal-600 hover:shadow-lg hover:shadow-teal-500/40 hover:-translate-y-1 transition-all duration-300"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://www.instagram.com/tehniyat007" target="_blank" class="w-12 h-12 border border-gray-700 rounded-xl flex items-center justify-center text-gray-400 hover:bg-teal-600 hover:text-white hover:border-teal-600 hover:shadow-lg hover:shadow-teal-500/40 hover:-translate-y-1 transition-all duration-300"><i class="fab fa-instagram"></i></a>
+                        <a href="https://github.com/Tehniat12345" target="_blank" class="w-12 h-12 border border-gray-700 rounded-xl flex items-center justify-center text-gray-400 hover:bg-teal-600 hover:text-white hover:border-teal-600 hover:shadow-lg hover:shadow-teal-500/40 hover:-translate-y-1 transition-all duration-300"><i class="fab fa-github"></i></a>
+                        <a href="https://www.tiktok.com/@tehniat.mustafa" target="_blank" class="w-12 h-12 border border-gray-700 rounded-xl flex items-center justify-center text-gray-400 hover:bg-white hover:text-black hover:border-white hover:shadow-lg hover:shadow-teal-500/40 hover:-translate-y-1 transition-all duration-300"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- AOS Animation Script -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            duration: 800,
+            easing: 'ease-out-cubic',
+            once: true,
+            offset: 50,
+        });
+    </script>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- KINETIC STYLE BACKGROUND SCRIPT (Spiral Galaxy) -->
+    <script>
+        const canvasContainer = document.getElementById('canvas-container');
+        
+        const scene = new THREE.Scene();
+        // Deep black background
+        scene.background = new THREE.Color('#050505');
+        scene.fog = new THREE.FogExp2('#050505', 0.05);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 5;
+
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        canvasContainer.appendChild(renderer.domElement);
+
+        // --- 1. KINETIC SPIRAL GALAXY PARTICLES ---
+        const count = 4000;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(count * 3);
+        const colors = new Float32Array(count * 3);
+
+        // TEAL COLORS
+        const primaryTeal = new THREE.Color('#2dd4bf'); // Bright Teal
+        const deepDarkTeal = new THREE.Color('#0f172a'); // Dark Teal/Blue
+
+        for (let i = 0; i < count * 3; i += 3) {
+            // Spiral shape math
+            const theta = Math.random() * Math.PI * 2;
+            const radius = 2.0 + Math.random() * 1.5;
+
+            positions[i] = Math.cos(theta) * radius;
+            positions[i + 1] = Math.sin(theta) * radius + (Math.random() - 0.5) * 0.8;
+            positions[i + 2] = (Math.random() - 0.5) * 2;
+
+            // Mix colors randomly
+            const mixColor = primaryTeal.clone().lerp(deepDarkTeal, Math.random());
+            colors[i] = mixColor.r;
+            colors[i + 1] = mixColor.g;
+            colors[i + 2] = mixColor.b;
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const material = new THREE.PointsMaterial({
+            size: 0.024,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending // This makes them glow like neon
+        });
+
+        const particleMesh = new THREE.Points(geometry, material);
+        scene.add(particleMesh);
+
+        // --- 2. MOUSE INTERACTION ---
+        let mX = 0, mY = 0;
+        window.addEventListener('mousemove', (event) => {
+            mX = (event.clientX / window.innerWidth) - 0.5;
+            mY = (event.clientY / window.innerHeight) - 0.5;
+        });
+
+        // --- 3. SCROLL INTERACTION (The "Kinetic" feel) ---
+        window.addEventListener('scroll', () => {
+            const scrollPercentage = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+            // Rotate the galaxy faster as you scroll
+            particleMesh.rotation.z = scrollPercentage * 3.5;
+            // Move it slightly in Z space
+            particleMesh.position.z = scrollPercentage * 1.5;
+        });
+
+        // --- 4. ANIMATION LOOP ---
+        const clock = new THREE.Clock();
+        const animate = () => {
+            const time = clock.getElapsedTime();
+
+            // Constant slow rotation
+            particleMesh.rotation.y = time * 0.03;
+            particleMesh.rotation.x = time * 0.015;
+
+            // Follow mouse smoothly (Easing)
+            particleMesh.position.x += (mX * 2.0 - particleMesh.position.x) * 0.06;
+            particleMesh.position.y += (-mY * 2.0 - particleMesh.position.y) * 0.06;
+
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        };
+
+        animate();
+
+        // Resize Handle
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>
